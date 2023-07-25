@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Care App</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" type="text/css" href="/style/dashboard.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Self Care App</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" href="/">Dashboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="/logout">Logout</a>
+              </li>
+              
+            </ul>
+            </div>
+        </div>
+    </nav>
+    <div> 
+       <form method="POST" action="/addlog/{{ tracker['id'] }}" >
+        <div class="container-fluid">
+            <div class="col">
+                <label class="col-2 form-label"><b>Time Stramp</b></label>
+                <input class="col-4" type="text" value="{{ timestamp }}" name="timeStamp" id="timeStamp" required >
+            </div>
+            <div class="col">
+                <label class="col-2 form-label"><b>Tracker Number: </b></label>
+                <span class="col-4 card-text"><b>Tracker {{ tracker['id'] }}</b> </span>
+            </div>
+<!--             <p class="col-2 form-label"><b>Tracker:</b></p> -->
+            
+            <div class="col">
+                <label class="col-2 form-label"><b>Value</b></label>
+                {% if tracker['tracker_type']=="Numerical" %}
+                <input class="col-4" type="Number" step="0.01" name="value" id="value" minlength="4" required >
+                {% elif tracker['tracker_type']=="Time Duration" %}
+                <input class="col-4" type="time" name="value" id="value">
+                {% elif tracker['tracker_type']=="Boolean" %}
+                <select class="col-4" name="value">
+                    <option value="True">True</option>
+                    <option value="False">False</option>
+                </select>
+                {% elif tracker['tracker_type']=="Multiple Choice" %}
+                <select class="col-4" name="value">
+                    {% for choice in choices %}
+                    <option value="{{choice['choice']}}">{{choice['choice']}}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+            </div>
+            <div class="col">
+                <label class="col-2 form-label"><b>Note</b></label>
+                <input class="col-4" type="text" name="note" id="note" minlength="4" required >
+            </div>
+            <button type="submit" class="btn btn-primary" >Add Log</button>
+        </div>
+    </form>
+    </div>
+    
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>
