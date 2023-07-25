@@ -1,0 +1,5 @@
+Tracker_id,Tracker_name,Description,Tracker_Type
+2,Temperature Tracker,Tracking body temperature in Fahrenheit,Numerical
+8,Daily Exercise Tracker,which exercise i did ,Multiple Choice
+9,Medicine Tracker,taken medicine for today or not,Boolean
+10,Digital Detox Tracker,rest from electronic gadgets,Time Duration

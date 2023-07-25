@@ -1,0 +1,16 @@
+Flask
+Flask_Login
+Flask_Security
+Flask-SQLAlchemy
+Flask_Caching
+Flask_Restful
+Flask-Mail
+matplotlib
+weasyprint
+numpy
+redis
+celery[redis]
+Pillow
+email-validator
+requests
+httplib2
