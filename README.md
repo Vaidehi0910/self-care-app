@@ -4,8 +4,11 @@ web application which will help you to take care of yourself by sending monthly 
 Here are the instructions to follow to run self care app on your local machine
 
 step 1: open command prompt
+
 step 2: Redirect it to the project folder's location  
+
 step 3: Run command "py -m venv env" to create virtual environment in your local machine
+
 step 4: Run the following command to enable virtual environment
 			for windows: env/Scripts/activate
 			for linux: /usr/bin/python3 env
