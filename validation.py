@@ -12,11 +12,13 @@ from werkzeug.utils import secure_filename
 from database import db
 from model import Username,Tracker,User_Tracker,Logging,Tracker_Log,Tracker_Type
 from flask_security import UserMixin
+# from flask_jwt_extended import jwt_required, create_access_token
 from datetime import datetime,timezone
 import requests
 import pytz
 import json
 import tasks
+import asyncio
 import os
 # import matplotlib
 # matplotlib.use("Qt5Agg")
@@ -24,7 +26,7 @@ import matplotlib.pyplot as plt
 import numpy
 from worker import celery
 from jinja2 import Template
-# from weasyprint import HTML
+from weasyprint import HTML
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -57,7 +59,7 @@ def verify_password(username_or_token, password):
 def login():
     error=None
     if request.method=="GET":
-        return render_template("login.html",error=error)
+        return render_template("dashboard.html")
     if request.method=="POST":
         uname=request.form["username"]
         pas= request.form["password"]
@@ -76,52 +78,13 @@ def login():
         if pas!=passw:
             error="invalid password"
             return render_template("login.html",error=error)
-
+        # if user:
+        #     access_token = create_access_token(identity=uname)
         login_user(user)
         return redirect(url_for('dash'))
 
 # ========================================================================================================================================
-#                                                   Sign Up
-# ========================================================================================================================================
-
-@app.route("/signUp",methods=["GET","POST"])
-def signUp():
-    error=None
-    if request.method=="GET":
-        return render_template("signUp.html",error=error)
-    if request.method=="POST":
-        uname=request.form["username"]
-        pas= request.form["password"]
-        repas=request.form["re_password"]
-        email=request.form["email"]
-        web=request.form["webhook"]
-        option=request.form.get("format")
-        if '"' in uname or "'" in uname:
-            error="Enter a valid username"
-            return render_template("signUp.html",error=error)
-        if '"' in pas or "'" in pas:
-            error="Enter a valid password"
-            return render_template("signUp.html",error=error)
-        if "@" not in email:
-            error="Enter valid email"
-            return render_template("signUp.html",error=error) 
-        if pas!=repas:
-            error="re-entered password do not match"
-            return render_template("signUp.html",error=error)
-        user=db.session.query(Username).filter(Username.username==uname).first()
-        if user is not None:
-            error="Username already exist"
-            return render_template("signUp.html",error=error)
-        new_user=Username(username=uname,password=pas,email=email,webhook=web,report_option=option)
-        # token=new_user.generate_auth_token()
-        # print(token)
-        db.session.add(new_user)
-        db.session.commit()
-        return render_template("login.html",error=error)
-
-
-# ========================================================================================================================================
-#                                                   Sign Up
+#                                                   logout
 # ========================================================================================================================================
 
 @app.route("/logout",methods=["GET"])
@@ -159,180 +122,8 @@ def report_format():
         user=current_user
         user.report_option=option
         db.session.commit()
-        return redirect(url_for('dash'))
+        return redirect("http://127.0.0.1:5000/#/dash")
 
-# ========================================================================================================================================
-#                                                   Crate Tracker
-# ========================================================================================================================================
-
-@app.route("/createTracker",methods=["GET","POST"])
-@login_required
-def create_tracker():
-    if request.method=="GET":
-        return render_template("createTracker.html")
-    if request.method=="POST":
-        user=current_user
-        tname=request.form["tracker_name"]
-        desc=request.form["desc"]
-        ttype=request.form.get("type")
-        uid=int(user.uid)
-        # print(ttype)
-
-        new_tracker=Tracker(tracker_name=tname,description=desc,tracker_type=ttype)
-        print(new_tracker)
-        db.session.add(new_tracker)
-        db.session.commit()
-        if ttype=="Multiple Choice":
-            choices=request.form["choices"].strip().split("\n")
-            for i in choices:
-                new_choice=Tracker_Type(tid=new_tracker.id,choice=i)
-                db.session.add(new_choice)
-                db.session.commit()
-        tu=User_Tracker(uid=user.uid,tid=new_tracker.id)
-        cache.delete_memoized(data_acess.get_user_tracker,user.uid)
-
-        db.session.add(tu)
-        db.session.commit()
-        
-        return redirect(url_for('dash'))
-
-# ========================================================================================================================================
-#                                                   Edit Tracker
-# ========================================================================================================================================
-
-@app.route("/edit/<int:id>",methods=["GET","POST"])
-@login_required
-def editTracker(id):
-    if request.method=="GET":
-        tracker=db.session.query(Tracker).filter_by(id=id).first()
-        return render_template("editTracker.html",tracker=tracker)
-    if request.method=="POST":
-        user=current_user
-        tname=request.form["tracker_name"]
-        desc=request.form["desc"]
-        ttype=request.form.get("type")
-        tracker=db.session.query(Tracker).filter_by(id=id).first()
-        tracker.tracker_name=tname
-        tracker.tracker_type=ttype
-        tracker.description=desc
-        cache.delete_memoized(data_acess.get_user_tracker,user.uid)
-        db.session.commit()
-        return redirect(url_for('dash'))
-
-# ========================================================================================================================================
-#                                                   Delete Tracker
-# ========================================================================================================================================
-
-@app.route("/delete/<int:id>",methods=["GET","POST"])
-@login_required
-def deleteTracker(id):
-    if request.method=="GET":
-        ut=db.session.query(User_Tracker).filter_by(tid=id).first()
-        db.session.delete(ut)
-        # db.session.commit()
-        tracker=db.session.query(Tracker).filter_by(id=id).first()
-        db.session.delete(tracker)
-        db.session.commit()
-        cache.delete_memoized(data_acess.get_user_tracker,user.uid)
-        return redirect(url_for('dash'))
-
-# ========================================================================================================================================
-#                                                   View Log
-# ========================================================================================================================================
-
-@app.route("/logging/<int:id>",methods=["GET","POST"])
-@login_required
-def logging(id):
-    if request.method=="GET":
-        log=None
-        tracker=db.session.query(Tracker).filter_by(id=id).first()
-        # log=data_acess.get_tracker_log(id)
-        url="http://127.0.0.1:5000/api/log/"+str(id)
-        # http_obj=Http()
-        # log=http_obj.request(uri=url)[1]
-        # decoded_log=log.decode()
-        r=requests.get(url)
-        res=json.dumps(r.text)
-        log=[]
-        for i in r.json():
-            # print(i)
-            # print("hi"+"\n")
-            log.append(i)
-        # print(log)
-        # if log is None:
-        #     return render_template("logging.html",id=id,log=None,tracker=tracker)
-        return render_template("logging.html",log=log,tracker=tracker)
-
-# ========================================================================================================================================
-#                                                   Add Log
-# ========================================================================================================================================
-
-@app.route("/addlog/<int:id>",methods=["GET","POST"])
-@login_required
-def addLog(id):
-    if request.method=="GET":
-        # IST = pytz.timezone('Asia/Kolkata')
-        now=datetime.now(pytz.timezone("Asia/Kolkata"))
-        tracker=db.session.query(Tracker).filter_by(id=id).first()
-        choice=None
-        if tracker.tracker_type=="Multiple Choice":
-            choice=db.session.query(Tracker_Type).filter_by(tid=id).all()
-
-        return render_template("addLog.html",tracker = tracker,timestamp=now,choices=choice)
-    if request.method=="POST":
-        time=request.form['timeStamp']
-        value=request.form['value']
-        note=request.form['note']
-        payload={'timestamp':time,"value":value,"note":note,"tid":id}
-        url="http://127.0.0.1:5000/api/log/"+str(id)
-        r=requests.post(url,json=payload)
-        # print(r.text)
-        return redirect(url_for('logging',id=id))
-
-# ========================================================================================================================================
-#                                                   Edit Log
-# ========================================================================================================================================
-
-@app.route("/logging/edit/<int:id>",methods=["GET","POST"])
-@login_required
-def editLog(id):
-    if request.method=="GET":
-        log=db.session.query(Logging).filter_by(log_id=id).first()
-        tracker=db.session.query(Tracker).filter_by(id=log.tid).first()
-        choice=db.session.query(Tracker_Type).filter_by(tid=log.tid).all()
-        return render_template("editLog.html",log=log,tracker=tracker,choices=choice)
-    if request.method=="POST":
-        time=request.form['timeStamp']
-        value=request.form['value']
-        note=request.form['note']
-        log=db.session.query(Logging).filter_by(log_id=id).first()
-        log.time=time
-        log.value=value
-        log.note=note
-        tid=log.tid
-        db.session.commit()
-        tracker=db.session.query(Tracker).filter_by(id=tid).first()
-        tracker.time=time
-        tracker.value=value
-        cache.delete_memoized(data_acess.get_tracker_log,id)
-        # cache.delete_memoized(data_acess.get_tracker,id)
-        db.session.commit()
-        return redirect(url_for('logging',id=tid))
-
-# ========================================================================================================================================
-#                                                   Delete Log
-# ========================================================================================================================================
-
-@app.route("/logging/delete/<int:id>",methods=["GET","POST"])
-@login_required
-def deleteLog(id):
-    if request.method=="GET":
-
-        log=db.session.query(Logging).filter_by(log_id=id).first()
-        url="http://127.0.0.1:5000/api/log/"+str(id)
-        r=requests.delete(url,auth=HTTPBasicAuth(current_user.username, current_user.password))
-        tid=log.tid
-        return redirect(url_for('logging',id=tid))
 
 # ========================================================================================================================================
 #                                                   TrendLine
@@ -341,8 +132,10 @@ def deleteLog(id):
 @app.route("/trendline/<int:id>",methods=["GET","POST"])
 @login_required
 def trendline(id):
+    user=current_user
     track=db.session.query(Tracker).filter_by(id=id).first()
-    log=data_acess.get_tracker_log(id)
+    # track_id=db.session.query(User_Tracker).filter_by(uid=user.uid).all()
+    log=db.session.query(Logging).filter_by(tid=id).all()
     val=[]
     time=[]
     y=[]
@@ -425,7 +218,7 @@ def trendline(id):
 
     # return render_template("trendline.html",tracker=track)
 
-    return redirect(url_for('logging',id=id))
+    return redirect("http://127.0.0.1:5000/#/dash")
 
 # ========================================================================================================================================
 #                                                   Statistics
@@ -435,7 +228,7 @@ def trendline(id):
 @login_required
 def stats(id):
     track=db.session.query(Tracker).filter_by(id=id).first()
-    log=data_acess.get_tracker_log(id)
+    log=db.session.query(Logging).filter_by(tid=id).all()
     val=[]
     sum=0
     if track.tracker_type=="Numerical":
@@ -559,10 +352,8 @@ def exportLog(id):
     name="Tracker"+str(id)+"log.csv"
     # with app.test_request_context('/export/tracker'):
     job=tasks.create_csv.delay(header,log,name)
-    # callFlash("CSV Exported Successfully")
-    # flash("CSV Exported Successfully",category="info")
-    # url='http://127.0.0.1:5000/logging/'+str(id)
-    # redirect(url)
+    job.wait()
+
     return send_from_directory('exportedFiles',name)
     
     
@@ -599,7 +390,7 @@ def upload(id):
             if result=="error":
                 return "Header names are not matching. Please send the csv in correct format"
             else:
-                return redirect(url_for('logging',id=id))
+                return redirect("http://127.0.0.1:5000/#/dash")
         else:
             return "File Extension Not Correct. Please Upload CSV file only"
     

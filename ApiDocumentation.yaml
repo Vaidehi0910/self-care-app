@@ -168,6 +168,26 @@ info:
       </thead>
       <tbody>
       <tr>
+        <td>User</td>
+        <td>USER001</td>
+        <td>Invalid Password</td>
+      </tr>
+      <tr>
+        <td>Tracker</td>
+        <td>TRACKER001</td>
+        <td>Tracker Name is required and should be string</td>
+      </tr>
+      <tr>
+        <td>Tracker</td>
+        <td>TRACKER002</td>
+        <td>Tracker description is required and should be string</td>
+      </tr>
+      <tr>
+        <td>Tracker</td>
+        <td>TRACKER003</td>
+        <td>Tracker type is required and should be string</td>
+      </tr>
+      <tr>
         <td>Log</td>
         <td>LOG001</td>
         <td>TimeStamp is required and should be string </td>
@@ -189,112 +209,315 @@ info:
 servers:
   - url: http://127.0.0.1:5000/
 paths:
-#   /api/trackers:
-#     description: End point to crate and get deck resource
-#     get:
-#       description: Operation to get deck. 
-#       responses:
-#         '200':
-#           description: Request Successful
-#           content:
-#             application/json:
-#               schema:
-#                 type: array
-#                 items:
-#                   properties:
-#                     deck_id:
-#                       type: integer
-#                       example: 1
-#                     deck_name:
-#                       type: string
-#                       example: English
-#                     score:
-#                       type: string
-#                       example: '0'
-#                     time:
-#                       type: string
-#                       example: 'None'
-#         '404':
-#           description: No Tracker Created
-#         '500':
-#           description: Internal Server Error    
-#     post:
-#       description: Operation to create the Tracker resource
-#       requestBody:
-#         content:
-#           application/json:
-#             schema:
-#               type: object
-#               properties:
-#                 tracker_name:
-#                   type: string
-#                   example: Temperature Tracker
-#                 description:
-#                   type: string
-#                   example: 'keep record of temperature'
-#                 tracker_type:
-#                   type: string
-#                   example: Number
-#       responses:
-#         '201':
-#           description: Successfully Created
-#           content:
-#             application/json:
-#               schema:
-#                 type: object
-#                 properties:
-#                   id:
-#                     type: integer
-#                     example: 1
-#                   tracker_name:
-#                     type: string
-#                     example: Temperature Tracker
-#                   description:
-#                     type: string
-#                     example: 'keep record of temperature'
-#                   tracker_type:
-#                     type: string
-#                     example: Number
-#                   value:
-#                     type: string
-#                     example: None
-#                   time:
-#                     type: string
-#                     example: None
+  /api/login/{username}/{password}:
+    description: End point to get user
+    get:
+      description: login user
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+            example: "hello"
+        - in: path  
+          name: password
+          required: true
+          schema:
+            type: string
+            example: "my_password"
+      responses:
+        '200':
+          description: Request Successful
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Login Successful"
+        '400':
+          description: Invalid Password
+        '404':
+          description: No User Created
+        '500':
+          description: Internal Server Error     
+    
+  /api/signup:
+    description: End point to create user
+    post:
+      description: Operation to create the user resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: hello
+                password:
+                  type: string
+                  example: 'my_password'
+                email:
+                  type: string
+                  example: 'myemail@email.com'
+                webhook:
+                  type: string
+                  example: 'webhook of google chat'
+                report_option:
+                  type: string
+                  example: HTML
+      responses:
+        '201':
+          description: Successfully Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  username:
+                    type: string
+                    example: hello
+                  password:
+                    type: string
+                    example: 'my_password'
+                  email:
+                    type: string
+                    example: 'myemail@email.com'
+                  webhook:
+                    type: string
+                    example: 'webhook of google chat'
+                  report_option:
+                    type: string
+                    example: HTML
 
-#         '500':
-#           description: Internal Server Error
-#         '400':
-#           description: Bad request
-#           content:
-#             application/json:
-#               schema:
-#                 type: object
-#                 properties:
-#                   error_code:
-#                     type: string
-#                   error_message:
-#                     type: string
+        '500':
+          description: Internal Server Error
+        '401':
+          description: Username already exist
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_code:
+                    type: string
+                  error_message:
+                    type: string
+  /api/logout:
+    description: End point to logout user
+    get:
+      description: Operation to logout user
+      responses:
+        '200':
+          description: Request Successful
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Logout Successful"
+        '500':
+          description: Internal Server Error
+  /api/trackers:
+    description: End point to create and get tracker resource
+    get:
+      description: Operation to get tracker. 
+      responses:
+        '200':
+          description: Request Successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    tid:
+                      type: integer
+                      example: 1
+                    tracker_name:
+                      type: string
+                      example: Temperature Tracker
+                    description:
+                      type: string
+                      example: 'measure temperature'
+                    tracker_type:
+                      type: string
+                      example: 'Numerical'
+                    time:
+                      type: string
+                      example: "Null"
+                    valie:
+                      type: string
+                      example: "Null"
+        '404':
+          description: No Tracker Created
+        '500':
+          description: Internal Server Error    
+    post:
+      description: Operation to create the Tracker resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tracker_name:
+                  type: string
+                  example: Temperature Tracker
+                description:
+                  type: string
+                  example: 'keep record of temperature'
+                tracker_type:
+                  type: string
+                  example: Number
+                choices:
+                  type: string
+                  example: 'my choices'
+      responses:
+        '201':
+          description: Successfully Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  tracker_name:
+                    type: string
+                    example: Temperature Tracker
+                  description:
+                    type: string
+                    example: 'keep record of temperature'
+                  tracker_type:
+                    type: string
+                    example: Number
+                  value:
+                    type: string
+                    example: None
+                  time:
+                    type: string
+                    example: None
+
+        '500':
+          description: Internal Server Error
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_code:
+                    type: string
+                  error_message:
+                    type: string
                     
-#   /api/trackers/{tracker_id}:
-#     description: Operation to delete tracker
-#     delete:
-#       description: Operation to delete the tracker resource
-#       parameters:
-#         - in: path
-#           name: tracker_id
-#           required: true
-#           schema:
-#             type: integer
-#             example: 1
-#       responses:
-#         '200':
-#           description: Tracker Successfully Deleted
-#         '500':
-#           description: Internal Server Error
-#         '404':
-#           description: Tracker not found 
-                    
+  /api/trackers/{tracker_id}:
+    description: Operation to delete tracker
+    delete:
+      description: Operation to delete the tracker resource
+      parameters:
+        - in: path
+          name: tracker_id
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Tracker Successfully Deleted
+        '500':
+          description: Internal Server Error
+        '404':
+          description: Tracker not found
+    put:
+      description: Operation to create the Tracker resource
+      parameters:
+        - in: path
+          name: tracker_id
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tracker_name:
+                  type: string
+                  example: Temperature Tracker
+                description:
+                  type: string
+                  example: 'keep record of temperature'
+                tracker_type:
+                  type: string
+                  example: Number
+                choices:
+                  type: string
+                  example: "my choices"
+      responses:
+        '201':
+          description: Successfully Created
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Tracker Edit Successful"
+
+        '500':
+          description: Internal Server Error
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_code:
+                    type: string
+                  error_message:
+                    type: string 
+  /api/choices/{id}:
+    description: End point to create and get log resource
+    get:
+      description: Operation to get card of given tracker. 
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Request Successful
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    tid:
+                      type: integer
+                      example: 2
+                    choice:
+                      type: string
+                      example: "my_choice"
+        '500':
+          description: Internal Server Error
+        '404':
+          description: Choices not found                   
   /api/log/{id}:
     description: End point to create and get log resource
     get:
@@ -334,8 +557,6 @@ paths:
           description: Internal Server Error
         '404':
           description: Log not found  
-        '400':
-          description: Invalid Tracker id
         
     post:
       description: Operation to create the Log resource
@@ -396,7 +617,52 @@ paths:
                   error_code:
                     type: string
                   error_message:
-                    type: string  
+                    type: string
+    put:
+      description: Operation to create the Log resource
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timestamp:
+                  type: string
+                  example: "2022-09-16 20:25:09.877936+05:30"
+                value:
+                  type: string
+                  example: "98.6"
+                note:
+                  type: string
+                  example: "I was not feeling okay"
+      responses:
+        '201':
+          description: Successfully Created
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Log Editted Successfully"
+        '500':
+          description: Internal Server Error
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_code:
+                    type: string
+                  error_message:
+                    type: string    
     delete:
       description: Delete a log
       parameters:

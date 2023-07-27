@@ -31,7 +31,7 @@ BASE="http://127.0.0.1:5000"
 # =========================================================================================================================================
 @celery.on_after_finalize.connect
 def send_daily_alert(sender, **kwargs):
-    sender.add_periodic_task(crontab(minute=3, hour=8),daily_alert.s(),name="daily alert")
+    sender.add_periodic_task(crontab(minute=3, hour=20),daily_alert.s(),name="daily alert")
     # sender.add_periodic_task(10.0,daily_alert.s(),name="montly progress")
 
 @celery.task()
@@ -100,7 +100,7 @@ def create_csv(header,data,name):
 # ==========================================================================================================================================
 @celery.on_after_finalize.connect
 def send_monthly_progress(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=15, minute=45, day_of_month='24'),send_email.s(),name="montly progress")
+    sender.add_periodic_task(crontab(hour=0, minute=3, day_of_month='1'),send_email.s(),name="montly progress")
     # sender.add_periodic_task(10.0,send_email.s(),name="montly progress")
 
 

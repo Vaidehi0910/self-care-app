@@ -1,7 +1,7 @@
 Flask
 Flask_Login
 Flask_Security
-Flask-SQLAlchemy
+Flask_SQLAlchemy
 Flask_Caching
 Flask_Restful
 Flask-Mail

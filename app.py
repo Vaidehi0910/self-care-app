@@ -20,6 +20,8 @@ app=Flask(__name__, template_folder='templates')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///database.sqlite3"
 app.config['SECRET_KEY']="thisisasecretkey"
+app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] = "Authentication-Token"
+
 # app.config["CELERY_BROKER_URL"]="redis://localhost:6379/1"
 # app.config["CELERY_RESULT_BACKEND"]=="redis://localhost:6379/2"
 db=SQLAlchemy()
@@ -45,9 +47,20 @@ app.app_context().push()
 api=Api(app)
 # app.app_context().push()
 
+from api import UserAPi
+api.add_resource(UserAPi,"/api/login/<string:username>/<string:password>","/api/signup")
+
+from api import LogoutAPI
+api.add_resource(LogoutAPI,"/api/logout")
+
 from api import LogAPI
 api.add_resource(LogAPI,"/api/log/<int:id>")
 
+from api import TrackerAPI
+api.add_resource(TrackerAPI,"/api/tracker","/api/tracker/<int:id>")
+
+from api import TrackerTypeAPI
+api.add_resource(TrackerTypeAPI,"/api/choices/<int:id>")
 
 # cache initialization
 cache.init_app(app)
